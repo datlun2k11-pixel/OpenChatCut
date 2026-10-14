@@ -1,7 +1,7 @@
 // Probe definitions for each provider page. Import utilities from key-probe-utils.ts
 
 import {
-  ProbeDef,
+  type ProbeDef,
   llmProbe,
   fetchWithProxy,
   base,
