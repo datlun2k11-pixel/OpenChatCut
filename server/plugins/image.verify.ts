@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { validateImageRequest } from './image.ts';
-import { callGrokImageProvider } from './image-provider-clients.ts';
+import { callCloudflareImageProvider, callGrokImageProvider } from './image-provider-clients.ts';
 
 const basic = validateImageRequest({ prompt: 'a cat' });
 assert.equal(basic.model, 'gpt-image-2');
@@ -113,6 +113,31 @@ assert.throws(
   /custom width\/height are not supported/,
 );
 
+const cloudflare = validateImageRequest({ model: 'cloudflare', prompt: 'a corgi surfing', count: 2, seed: 7 });
+assert.equal(cloudflare.model, 'cloudflare');
+assert.equal(cloudflare.count, 2);
+assert.equal(cloudflare.seed, 7);
+assert.throws(
+  () => validateImageRequest({ model: 'cloudflare', prompt: 'x', count: 5 }),
+  /at most 4 images/,
+);
+assert.throws(
+  () => validateImageRequest({ model: 'cloudflare', prompt: 'x'.repeat(2049) }),
+  /at most 2048 characters/,
+);
+assert.throws(
+  () => validateImageRequest({ model: 'cloudflare', prompt: 'x', referencePaths: ['/media/uploads/a.jpg'] }),
+  /too many reference images/,
+);
+assert.throws(
+  () => validateImageRequest({ model: 'cloudflare', prompt: 'x', width: 1024, height: 1024 }),
+  /custom width\/height are not supported/,
+);
+assert.throws(
+  () => validateImageRequest({ model: 'cloudflare', prompt: 'x', promptOptimizer: true }),
+  /promptOptimizer is supported by image-01/,
+);
+
 const originalFetch = globalThis.fetch;
 let grokRequest: Record<string, unknown> | null = null;
 globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
@@ -126,4 +151,25 @@ await callGrokImageProvider('https://api.x.ai/v1', 'test-key', 'grok-imagine-ima
 });
 globalThis.fetch = originalFetch;
 assert.equal(grokRequest?.aspect_ratio, '9:16', 'Grok receives the requested aspect ratio');
+
+let cloudflareCalls: Array<{ url: string; body: Record<string, unknown> }> = [];
+globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  cloudflareCalls.push({ url: String(input), body: JSON.parse(String((init as RequestInit)?.body)) as Record<string, unknown> });
+  return new Response(JSON.stringify({ result: { image: 'aGVsbG8=' }, success: true, errors: [], messages: [] }), {
+    headers: { 'content-type': 'application/json' },
+  });
+}) as typeof fetch;
+const cloudflareImages = await callCloudflareImageProvider('acct-123', 'cf-token', '@cf/black-forest-labs/flux-1-schnell', {
+  prompt: 'portrait', count: 2, seed: 7,
+});
+globalThis.fetch = originalFetch;
+assert.equal(cloudflareImages.length, 2);
+assert.equal(cloudflareImages[0]?.b64_json, 'aGVsbG8=', 'Cloudflare base64 image is extracted from result.image');
+assert.equal(cloudflareCalls[0]?.url, 'https://api.cloudflare.com/client/v4/accounts/acct-123/ai/run/@cf/black-forest-labs/flux-1-schnell');
+assert.equal(cloudflareCalls[0]?.body.prompt, 'portrait');
+assert.equal(cloudflareCalls[1]?.body.seed, 8, 'seed increments per image in the batch');
+await assert.rejects(
+  callCloudflareImageProvider('', 'cf-token', '@cf/black-forest-labs/flux-1-schnell', { prompt: 'x', count: 1 }),
+  /CLOUDFLARE_ACCOUNT_ID/,
+);
 console.log('image.check: ok (provider-specific official parameters)');

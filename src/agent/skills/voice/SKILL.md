@@ -42,7 +42,7 @@ Use `submit_voice` to create a TTS audio asset. The current MCP tool contract is
 
 - `provider` is required. Configured choices may be `doubao`, `elevenlabs`,
   `minimax`, `inworld`, `fishaudio`, `speechify`, `openai`, `gemini`,
-  `mistral`, or `cartesia`. All providers are opt-in; use only providers shown
+  `mistral`, `cartesia`, or `cloudflare`. All providers are opt-in; use only providers shown
   as configured in the capabilities prompt.
 - `voiceId` is required, concrete, and provider-specific. The only exception is
   deliberate MiniMax `timbreWeights` mixing, where `voiceId` must be empty. Do
@@ -58,7 +58,8 @@ Use `submit_voice` to create a TTS audio asset. The current MCP tool contract is
   `outputFormat`. Omit unsupported or unrequested fields.
 - Inworld, Fish Audio, and Speechify accept only `voiceId` plus optional
   `modelId`. Do not pass expressive, speed, language, or output controls to
-  these providers.
+  these providers. Cloudflare (Workers AI MeloTTS) accepts `voiceId` (any
+  value), optional `modelId`, and `languageCode` (e.g. `en`).
 - `submit_voice` creates an audio asset only. Timeline placement, replacement,
   trimming, and alignment happen later with timeline tools.
 - For long narration, multiple `submit_voice` calls can be useful: split at
@@ -379,12 +380,12 @@ submit_sound({
 
 | Field | Description | Notes |
 | --- | --- | --- |
-| `provider` | `doubao`, `elevenlabs`, `minimax`, `inworld`, `fishaudio`, `speechify`, `openai`, `gemini`, `mistral`, or `cartesia` | Required; configured choices only |
+| `provider` | `doubao`, `elevenlabs`, `minimax`, `inworld`, `fishaudio`, `speechify`, `openai`, `gemini`, `mistral`, `cartesia`, or `cloudflare` | Required; configured choices only |
 | `text` | Text to synthesize | Required |
-| `voiceId` | Concrete provider-specific voice ID | Required except MiniMax timbre mix |
-| `modelId` | Provider model override | ElevenLabs, Inworld, Fish Audio, Speechify, OpenAI, Gemini, Mistral, Cartesia |
+| `voiceId` | Concrete provider-specific voice ID | Required except MiniMax timbre mix (Cloudflare accepts any value) |
+| `modelId` | Provider model override | ElevenLabs, Inworld, Fish Audio, Speechify, OpenAI, Gemini, Mistral, Cartesia, Cloudflare |
 | `speed` | Speech speed | ElevenLabs, MiniMax, OpenAI, Cartesia |
-| `languageCode` | Language hint/code | ElevenLabs, Cartesia |
+| `languageCode` | Language hint/code | ElevenLabs, Cartesia, Cloudflare |
 | `outputFormat` | Provider-supported output format | ElevenLabs, OpenAI, Gemini, Mistral, Cartesia |
 | `instructions` | Natural-language delivery direction | OpenAI, Gemini |
 | `speedRatio` | Speech speed | Doubao only |

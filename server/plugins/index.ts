@@ -161,6 +161,15 @@ export function serverPlugins(options: { projectStoreHttp?: boolean } = {}): Plu
       get xaiImageModel() {
         return getKey("XAI_IMAGE_MODEL") || "grok-imagine-image-2.0";
       },
+      get cloudflareAccountId() {
+        return getKey("CLOUDFLARE_ACCOUNT_ID");
+      },
+      get cloudflareApiKey() {
+        return getKey("LLM_CLOUDFLARE_API_KEY");
+      },
+      get cloudflareModel() {
+        return getKey("CLOUDFLARE_IMAGE_MODEL") || "@cf/black-forest-labs/flux-1-schnell";
+      },
     }),
     voiceGenerationPlugin({
       get elevenBaseUrl() {
@@ -221,6 +230,18 @@ export function serverPlugins(options: { projectStoreHttp?: boolean } = {}): Plu
       },
       get speechifyModel() {
         return getKey("SPEECHIFY_TTS_MODEL") || "simba-multilingual";
+      },
+      get cloudflareAccountId() {
+        return getKey("CLOUDFLARE_ACCOUNT_ID");
+      },
+      get cloudflareApiKey() {
+        return getKey("LLM_CLOUDFLARE_API_KEY");
+      },
+      get cloudflareModel() {
+        return getKey("CLOUDFLARE_TTS_MODEL") || "@cf/myshell-ai/melotts";
+      },
+      get cloudflareLang() {
+        return getKey("CLOUDFLARE_TTS_LANG") || "en";
       },
       ai: aiVoiceOptions(),
     }),

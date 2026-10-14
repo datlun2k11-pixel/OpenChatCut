@@ -2,7 +2,7 @@ export const GENERATE_WORKFLOW = `
 ## AI image generation
 - When Fal.ai is selected or explicitly requested, use model=fal and the requested falModel (or saved Fal image default from capabilities). If neither is set, ask which Fal model to use. Follow the catalog limits instead of native-provider defaults.
 - Use submit_image only after the user explicitly asks to generate an image.
-- Default model gpt-image-2; use nano-banana for reference-heavy work; image-01 (MiniMax) for stills without references (prompt ≤1500 chars, count ≤9, no referenceAssetIds; optional promptOptimizer).
+- Default model gpt-image-2; use nano-banana for reference-heavy work; image-01 (MiniMax) for stills without references (prompt ≤1500 chars, count ≤9, no referenceAssetIds; optional promptOptimizer); cloudflare (Workers AI) for text-to-image without references (prompt ≤2048 chars, count ≤4, optional seed).
 - Always provide a short descriptive name. Default aspectRatio 16:9, imageSize 1K, quality high, and count 1 (imageSize/quality are gpt-image-2-oriented).
 - If the project is not 16:9, ask for the desired aspect ratio. Never upgrade to 2K/4K unless the user explicitly requests it.
 - Pass project image asset IDs through referenceAssetIds; never fetch reference bytes yourself.
@@ -10,9 +10,9 @@ export const GENERATE_WORKFLOW = `
 
 ## TTS voice generation
 - Use submit_voice only for explicitly requested TTS after the user confirms a configured provider and a concrete provider-specific voiceId. MiniMax timbre mixing is the only voiceId exception.
-- Providers: doubao, elevenlabs, minimax, inworld, fishaudio, speechify, openai, gemini, mistral, and cartesia. All are opt-in; use only choices listed as configured in the capabilities prompt, and never mix voice catalogs.
+- Providers: doubao, elevenlabs, minimax, inworld, fishaudio, speechify, openai, gemini, mistral, cartesia, and cloudflare. All are opt-in; use only choices listed as configured in the capabilities prompt, and never mix voice catalogs.
 - Curated choices exist only for Doubao, ElevenLabs, and MiniMax. Bundled samples exist only where references/voices.md lists one. For every other provider, do not invent a preset or sample URL; require a concrete voiceId from the user/provider account.
-- AI SDK-backed fields: OpenAI supports modelId/speed/outputFormat/instructions; Gemini supports modelId/outputFormat/instructions; Mistral supports modelId/outputFormat; Cartesia supports modelId/speed/languageCode/outputFormat. Inworld, Fish Audio, and Speechify accept only voiceId and optional modelId.
+- AI SDK-backed fields: OpenAI supports modelId/speed/outputFormat/instructions; Gemini supports modelId/outputFormat/instructions; Mistral supports modelId/outputFormat; Cartesia supports modelId/speed/languageCode/outputFormat. Inworld, Fish Audio, and Speechify accept only voiceId and optional modelId. Cloudflare accepts voiceId (any value), optional modelId, and languageCode (MeloTTS lang, e.g. en).
 - MiniMax supports speed (0.5–2), pitch (-12–12), volume (0–10), and emotion natively. Doubao pitch is post-process; emotionScale/performancePrompt are Doubao-only. ElevenLabs retains its dedicated delivery controls.
 - submit_voice creates one media-pool audio asset only. Do not claim it was placed on the timeline.
 

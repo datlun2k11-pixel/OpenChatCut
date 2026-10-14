@@ -153,7 +153,8 @@ export function computeCaps(): Caps {
       has("MINIMAX_API_KEY") ||
       has("WAVESPEED_API_KEY") ||
       has("BYTEPLUS_API_KEY") ||
-      has("FAL_KEY"),
+      has("FAL_KEY") ||
+      (has("CLOUDFLARE_ACCOUNT_ID") && has("LLM_CLOUDFLARE_API_KEY")),
     voice:
       (has("DOUBAO_TTS_APP_ID") && has("DOUBAO_TTS_ACCESS_KEY")) ||
       has("ELEVENLABS_API_KEY") ||
@@ -161,6 +162,7 @@ export function computeCaps(): Caps {
       has("INWORLD_TTS_API_KEY") ||
       has("FISHAUDIO_TTS_API_KEY") ||
       has("SPEECHIFY_TTS_API_KEY") ||
+      (has("CLOUDFLARE_ACCOUNT_ID") && has("LLM_CLOUDFLARE_API_KEY")) ||
       (getKey("PREFERRED_VOICE_VENDOR") === "openai" && has("OPENAI_API_KEY")) ||
       (getKey("PREFERRED_VOICE_VENDOR") === "gemini" && has("GEMINI_API_KEY")) ||
       (getKey("PREFERRED_VOICE_VENDOR") === "mistral" && has("LLM_MISTRAL_API_KEY")) ||

@@ -220,3 +220,51 @@ export async function minimaxVoice(options: VoiceOptions, input: ValidVoiceReque
   if (!response.ok) throw new Error(await providerError(response));
   return minimaxVoiceResult(await response.text(), input.stream === true, input.excludeAggregatedAudio === true);
 }
+
+function cloudflareVoiceError(status: number, bodyText: string): string {
+  try {
+    const body = JSON.parse(bodyText) as { errors?: Array<{ message?: string }>; messages?: Array<{ message?: string }> };
+    const message = body.errors?.find((e) => e.message)?.message
+      ?? body.messages?.find((m) => m.message)?.message;
+    if (message) return `Cloudflare Workers AI: ${message.slice(0, 300)}`;
+  } catch {
+    // Fall through to the status-based message below.
+  }
+  return `Cloudflare Workers AI request failed (${status})`;
+}
+
+/** Cloudflare Workers AI text-to-speech (MeloTTS) via POST /accounts/{id}/ai/run/{model}.
+ *  The REST API answers either raw MP3 bytes (content-type audio/mpeg) or
+ *  `{ result: { audio: "<base64>" }, success: true }`. */
+export async function cloudflareVoice(options: VoiceOptions, input: ValidVoiceRequest): Promise<Buffer> {
+  if (!options.cloudflareAccountId) throw new Error('Cloudflare Workers AI is not configured. Set CLOUDFLARE_ACCOUNT_ID in .env.local.');
+  if (!options.cloudflareApiKey) throw new Error('Cloudflare Workers AI is not configured. Set the API Token in .env.local.');
+  const model = input.modelId || options.cloudflareModel;
+  const lang = input.languageCode || options.cloudflareLang || 'en';
+  const url = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(options.cloudflareAccountId)}/ai/run/${model}`;
+  const response = await fetchWithProxy(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${options.cloudflareApiKey}` },
+    body: JSON.stringify({ prompt: input.text, lang }),
+  });
+  if (!response.ok) throw new Error(cloudflareVoiceError(response.status, await response.text()));
+  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+  if (contentType.startsWith('audio/') || contentType.startsWith('application/octet-stream')) {
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (!bytes.length) throw new Error('Cloudflare Workers AI returned no audio');
+    return bytes;
+  }
+  const bodyText = await response.text();
+  try {
+    const parsed = JSON.parse(bodyText) as { result?: unknown };
+    const result = parsed.result ?? parsed;
+    const audio = typeof result === 'string'
+      ? result
+      : (result as Record<string, unknown>).audio;
+    if (typeof audio !== 'string' || !audio.length) throw new Error('Cloudflare Workers AI returned no audio');
+    return Buffer.from(audio, 'base64');
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Cloudflare Workers AI returned no audio') throw error;
+    throw new Error('Cloudflare Workers AI returned an invalid audio response');
+  }
+}

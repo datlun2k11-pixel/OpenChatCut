@@ -11,9 +11,9 @@ If a capability is off, say so and offer alternatives (upload, library, another 
 
 | Capability | Tools (examples) | Keys (any configured vendor is enough) |
 | --- | --- | --- |
-| Image gen | `submit_image` | `IMAGE_API_KEY` / OpenAI, `GEMINI_API_KEY`, `MINIMAX_API_KEY` |
+| Image gen | `submit_image` | `IMAGE_API_KEY` / OpenAI, `GEMINI_API_KEY`, `MINIMAX_API_KEY`, `CLOUDFLARE_ACCOUNT_ID` + `LLM_CLOUDFLARE_API_KEY` (Cloudflare) |
 | Video gen | `submit_video` | `SEEDANCE_API_KEY`, `KLING_API_KEY`, `MINIMAX_API_KEY` (Hailuo), `LLM_OFOX_API_KEY` (OFox) |
-| TTS / voice | `submit_voice` | Provider-specific server key(s): Doubao, ElevenLabs, MiniMax, Inworld, Fish Audio, Speechify, OpenAI, Gemini, Mistral, or Cartesia |
+| TTS / voice | `submit_voice` | Provider-specific server key(s): Doubao, ElevenLabs, MiniMax, Inworld, Fish Audio, Speechify, OpenAI, Gemini, Mistral, Cartesia, or Cloudflare (`CLOUDFLARE_ACCOUNT_ID` + `LLM_CLOUDFLARE_API_KEY`) |
 | Music | `submit_music` | `MUREKA_API_KEY`, `MINIMAX_API_KEY`, `ATLASCLOUD_API_KEY` |
 | Sound FX gen | `submit_sound` | `ELEVENLABS_API_KEY` |
 | Stock search | `search_stock_media` | `PEXELS_API_KEY`, `PIXABAY_API_KEY`, `UNSPLASH_ACCESS_KEY`, `FREESOUND_API_KEY` |
@@ -21,7 +21,7 @@ If a capability is off, say so and offer alternatives (upload, library, another 
 | Web | `web_browser` | `FIRECRAWL_API_KEY` |
 | Sandbox / ffmpeg helpers | `run_code` | `E2B_API_KEY` (if used) |
 | Social publishing | `publish_to_social`, `track_social_publish` | `UPLOAD_POST_API_KEY` + `UPLOAD_POST_PROFILE` (Upload-Post profile with the social accounts connected) |
-| LLM agent | chat | Configure one or more independent provider triplets: `LLM_<PROVIDER>_BASE_URL`, `LLM_<PROVIDER>_API_KEY`, and `LLM_<PROVIDER>_MODEL`. Supported provider tokens are `ANTHROPIC`, `OPENAI`, `GEMINI`, `KIMI`, `QWEN`, `GLM`, `DEEPSEEK`, `MINIMAX`, and `MISTRAL`. `LLM_PROVIDER` controls the initially selected chat provider. |
+| LLM agent | chat | Configure one or more independent provider triplets: `LLM_<PROVIDER>_BASE_URL`, `LLM_<PROVIDER>_API_KEY`, and `LLM_<PROVIDER>_MODEL`. Supported provider tokens are `ANTHROPIC`, `OPENAI`, `GEMINI`, `KIMI`, `QWEN`, `GLM`, `DEEPSEEK`, `MINIMAX`, `MISTRAL`, and `CLOUDFLARE` (Cloudflare also needs `CLOUDFLARE_ACCOUNT_ID`). `LLM_PROVIDER` controls the initially selected chat provider. |
 
 ## Speech provider configuration
 
@@ -41,6 +41,9 @@ TTS provider keys:
   `LLM_MISTRAL_BASE_URL`; `MISTRAL_TTS_MODEL` defaults to
   `voxtral-mini-tts-2603`
 - Cartesia: `CARTESIA_API_KEY`; `CARTESIA_TTS_MODEL` defaults to `sonic-3`
+- Cloudflare Workers AI: `CLOUDFLARE_ACCOUNT_ID` + `LLM_CLOUDFLARE_API_KEY`
+  (shared with the Agent provider); `CLOUDFLARE_TTS_MODEL` defaults to
+  `@cf/myshell-ai/melotts`, `CLOUDFLARE_TTS_LANG` defaults to `en`
 
 Transcription follows the provider selected in Settings unless the user
 explicitly requests a configured `provider` override. AssemblyAI remains the

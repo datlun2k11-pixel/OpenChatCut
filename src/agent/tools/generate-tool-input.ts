@@ -38,6 +38,9 @@ export function buildSubmitImageArgs(args: GenerateArgs): SubmitImageArgs {
   if (model === 'image-01') {
     return { ...shared, width, height, seed: num(args.seed), promptOptimizer: bool(args.promptOptimizer) };
   }
+  if (model === 'cloudflare') {
+    return { ...shared, imageSize: args.imageSize as SubmitImageArgs['imageSize'], seed: num(args.seed) };
+  }
   if (model === 'nano-banana') return { ...shared, imageSize: args.imageSize as SubmitImageArgs['imageSize'] };
   if (model === 'wavespeed' || model === 'byteplus') return { ...shared, imageSize: args.imageSize as SubmitImageArgs['imageSize'], width, height };
   const outputFormat = args.outputFormat as SubmitImageArgs['outputFormat'];
@@ -103,6 +106,11 @@ const minimalVoice = (provider: MinimalVoiceProvider) => (args: GenerateArgs): S
   ...voiceBase(args, provider), modelId: str(args.modelId),
 });
 
+/** Cloudflare Workers AI (MeloTTS): text + voiceId + optional modelId override + languageCode. */
+const cloudflareVoice = (args: GenerateArgs): SubmitVoiceArgs => ({
+  ...voiceBase(args, 'cloudflare'), modelId: str(args.modelId), languageCode: str(args.languageCode),
+});
+
 type GenericVoiceProvider = 'openai' | 'gemini' | 'mistral' | 'cartesia';
 function genericVoice(args: GenerateArgs, provider: GenericVoiceProvider): SubmitVoiceArgs {
   const shared = {
@@ -127,6 +135,7 @@ const VOICE_STRATEGIES = {
   inworld: minimalVoice('inworld'),
   fishaudio: minimalVoice('fishaudio'),
   speechify: minimalVoice('speechify'),
+  cloudflare: cloudflareVoice,
   openai: (args) => genericVoice(args, 'openai'),
   gemini: (args) => genericVoice(args, 'gemini'),
   mistral: (args) => genericVoice(args, 'mistral'),

@@ -73,6 +73,16 @@ assert.equal(byteplusImage.imageSize, '2K');
 assert.equal(byteplusImage.promptOptimizer, undefined, 'BytePlus must not receive MiniMax-only options');
 assert.equal(byteplusImage.quality, undefined, 'BytePlus must not receive GPT-only options');
 
+const cloudflareImage = buildSubmitImageArgs({
+  model: 'cloudflare', prompt: 'neon city street', name: 'city', imageSize: '2K',
+  width: 1024, height: 1024, seed: 9, promptOptimizer: true, quality: 'high',
+});
+assert.equal(cloudflareImage.imageSize, '2K');
+assert.equal(cloudflareImage.seed, 9, 'Cloudflare keeps the seed');
+assert.equal(cloudflareImage.width, undefined, 'Cloudflare must not receive custom dimensions');
+assert.equal(cloudflareImage.promptOptimizer, undefined, 'Cloudflare must not receive MiniMax-only options');
+assert.equal(cloudflareImage.quality, undefined, 'Cloudflare must not receive GPT-only options');
+
 const hailuo = buildSubmitVideoArgs({
   model: 'hailuo', prompt: 'camera orbit', durationSeconds: 6, ratio: '16:9', resolution: '720p',
   refImages: [], mode: 'std', promptOptimizer: false, generateAudio: true, seed: 4,
@@ -212,6 +222,16 @@ const speechifyVoice = buildSubmitVoiceArgs({
 });
 assert.equal(speechifyVoice.modelId, 'simba-english');
 assert.equal(speechifyVoice.volume, undefined, 'Speechify must not receive MiniMax controls');
+
+const cloudflareVoice = buildSubmitVoiceArgs({
+  provider: 'cloudflare', text: 'Hello', voiceId: 'any-voice', modelId: '@cf/myshell-ai/melotts',
+  languageCode: 'fr', speed: 1.2, pitch: 2,
+});
+assert.equal(cloudflareVoice.provider, 'cloudflare', 'Cloudflare must not fall back to ElevenLabs');
+assert.equal(cloudflareVoice.modelId, '@cf/myshell-ai/melotts');
+assert.equal(cloudflareVoice.languageCode, 'fr');
+assert.equal(cloudflareVoice.speed, undefined, 'Cloudflare must not receive speed controls');
+assert.equal(cloudflareVoice.pitch, undefined, 'Cloudflare must not receive Doubao/MiniMax controls');
 
 const genericVoiceInput = {
   text: 'Configured provider voice',

@@ -25,8 +25,8 @@ const {
 // Synchronize this list when adding other capability pages.
 const EXPECTED_PAGES = [
   ...LLM_PROVIDER_PRESETS.map((preset) => `llm/${preset.id}`),
-  'image/openai', 'image/gemini', 'image/minimax', 'image/wavespeed', 'image/byteplus', 'image/xai',
-  'voice/elevenlabs', 'voice/openai', 'voice/gemini', 'voice/mistral', 'voice/cartesia',
+  'image/openai', 'image/gemini', 'image/minimax', 'image/wavespeed', 'image/byteplus', 'image/xai', 'image/cloudflare',
+  'voice/elevenlabs', 'voice/openai', 'voice/gemini', 'voice/mistral', 'voice/cartesia', 'voice/cloudflare',
   'voice/doubao', 'voice/minimax', 'voice/inworld', 'voice/fishaudio', 'voice/speechify',
   'video/seedance', 'video/kling', 'video/hailuo', 'video/byteplus', 'video/xai', 'video/ofox',
   'music/mureka', 'music/minimax', 'music/atlas', 'music/sonilo',

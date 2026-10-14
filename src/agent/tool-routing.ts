@@ -48,7 +48,7 @@ const ROUTING_GROUPS: readonly RoutingGroup[] = [
   },
   {
     requestContext: [
-      ['elevenlabs', 'doubao', 'minimax', 'inworld', 'fish audio', 'fishaudio', 'speechify', 'openai', 'gemini', 'mistral', 'cartesia'],
+      ['elevenlabs', 'doubao', 'minimax', 'inworld', 'fish audio', 'fishaudio', 'speechify', 'openai', 'gemini', 'mistral', 'cartesia', 'cloudflare'],
       ['tts', 'text-to-speech', 'speech synthesis', 'voice generation', 'voiceover generation', '配音', '语音合成'],
     ],
     tools: ['submit_voice', 'track_progress', 'rerun_generation'],

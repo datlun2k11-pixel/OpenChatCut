@@ -113,6 +113,7 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = [
           { value: 'wavespeed', label: 'WaveSpeed' },
           { value: 'byteplus', label: 'BytePlus · Seedream' },
           { value: 'grok-imagine', label: 'xAI Grok Imagine' },
+          { value: 'cloudflare', label: 'Cloudflare Workers AI' },
         ]),
         vendors: [
           { key: 'image/openai', vendor: 'openai', title: 'OpenAI', fields: [
@@ -138,6 +139,14 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = [
             fields: [
               modelText('XAI_IMAGE_MODEL', '生图模型', 'grok-imagine-image-2.0',
                 '测试连接后可直接选择接口返回的模型，也可以手动填写模型 ID。', true),
+            ] },
+          { key: 'image/cloudflare', vendor: 'cloudflare', title: 'Cloudflare Workers AI',
+            note: '使用 Workers AI REST API 生成图片（与 Agent 大脑共用同一组 Account ID + API Token）。文生图，每次最多 4 张；不支持参考图与自定义尺寸。',
+            fields: [
+              secret('CLOUDFLARE_ACCOUNT_ID', 'Account ID'),
+              secret('LLM_CLOUDFLARE_API_KEY', 'API Token'),
+              modelText('CLOUDFLARE_IMAGE_MODEL', '生图模型', '@cf/black-forest-labs/flux-1-schnell',
+                '也可以手动填写其它 Workers AI 生图模型 ID，如 @cf/bytedance/stable-diffusion-xl-lightning。', true),
             ] },
         ] },
       VOICE_SETTINGS_GROUP,

@@ -1,7 +1,7 @@
 import type { MediaAsset, TimelineState } from '../editor/types';
 
 export interface SubmitImageArgs {
-  model?: 'gpt-image-2' | 'nano-banana' | 'image-01' | 'wavespeed' | 'byteplus' | 'grok-imagine' | 'fal';
+  model?: 'gpt-image-2' | 'nano-banana' | 'image-01' | 'wavespeed' | 'byteplus' | 'grok-imagine' | 'cloudflare' | 'fal';
   /** Explicit curated Fal model ID; omitted uses the saved Fal default. */
   falModel?: string;
   prompt: string;
@@ -26,7 +26,7 @@ export interface SubmitImageArgs {
   outputFormat?: 'png' | 'jpeg' | 'webp';
   /** GPT Image JPEG/WebP compression, 0–100. */
   outputCompression?: number;
-  /** MiniMax image-01 only. */
+  /** MiniMax image-01 or Cloudflare Workers AI only. */
   seed?: number;
   /** MiniMax image-01 only: prompt_optimizer (official default false). */
   promptOptimizer?: boolean;

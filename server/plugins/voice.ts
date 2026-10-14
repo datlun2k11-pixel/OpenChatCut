@@ -3,7 +3,7 @@ import type { Plugin } from 'vite';
 
 import { generateAiVoice, isAiVoiceProvider } from './voice-ai-sdk.ts';
 import { saveVoiceAudio, saveVoiceSubtitle } from './voice-media.ts';
-import { doubaoVoice, elevenLabsVoice, fishAudioVoice, inworldVoice, minimaxVoice, speechifyVoice } from './voice-providers.ts';
+import { doubaoVoice, cloudflareVoice, elevenLabsVoice, fishAudioVoice, inworldVoice, minimaxVoice, speechifyVoice } from './voice-providers.ts';
 import type { VoiceOptions, VoiceProvider, VoiceRequest } from './voice-types.ts';
 import { validateVoiceRequest } from './voice-validation.ts';
 
@@ -58,6 +58,7 @@ export function voiceGenerationPlugin(options: VoiceOptions): Plugin {
             subtitleUrl = result.subtitleUrl;
           } else if (input.provider === 'elevenlabs') bytes = await elevenLabsVoice(options, input);
           else if (input.provider === 'doubao') bytes = await doubaoVoice(options, input);
+          else if (input.provider === 'cloudflare') bytes = await cloudflareVoice(options, input);
           else if (input.provider === 'inworld') bytes = await inworldVoice(options, input);
           else if (input.provider === 'fishaudio') bytes = await fishAudioVoice(options, input);
           else bytes = await speechifyVoice(options, input);

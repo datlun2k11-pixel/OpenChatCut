@@ -54,10 +54,20 @@ export function resolveLlmProviderConfig(
 ): ResolvedLlmProviderConfig {
   const provider = normalizeServerLlmProvider(providerValue);
   const names = llmProviderConfigNames(provider);
+  let baseUrl = resolveLlmBaseUrl(provider, get(names.baseUrl), AI_SDK_BASE_URL_FORMAT);
+  if (provider === 'cloudflare') {
+    // The preset base URL carries an ACCOUNT_ID placeholder: fill it from the
+    // shared Account ID field so the user only pastes the ID once for all
+    // three Cloudflare capabilities (Agent / image / TTS).
+    const accountId = get('CLOUDFLARE_ACCOUNT_ID').trim();
+    if (accountId && baseUrl.includes('ACCOUNT_ID')) {
+      baseUrl = baseUrl.replace('ACCOUNT_ID', accountId);
+    }
+  }
   return {
     provider,
     apiKey: get(names.apiKey),
-    baseUrl: resolveLlmBaseUrl(provider, get(names.baseUrl), AI_SDK_BASE_URL_FORMAT),
+    baseUrl,
     model: get(names.model) || defaultModelForProvider(provider),
   };
 }

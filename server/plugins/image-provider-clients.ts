@@ -227,3 +227,62 @@ export async function callGrokImageProvider(baseUrl: string, apiKey: string, mod
   if (!result.data?.length) throw new Error('grok-imagine returned no images');
   return result.data;
 }
+
+function cloudflareRunUrl(accountId: string): string {
+  return `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run`;
+}
+
+function cloudflareError(status: number, bodyText: string): string {
+  try {
+    const body = JSON.parse(bodyText) as { errors?: Array<{ message?: string }>; messages?: Array<{ message?: string }> };
+    const message = body.errors?.find((e) => e.message)?.message
+      ?? body.messages?.find((m) => m.message)?.message;
+    if (message) return `Cloudflare Workers AI: ${message.slice(0, 300)}`;
+  } catch {
+    // Fall through to the status-based message below.
+  }
+  return `Cloudflare Workers AI request failed (${status})`;
+}
+
+function cloudflareImageFromResult(result: unknown): string {
+  if (typeof result === 'string' && result.length > 0) return result;
+  if (result && typeof result === 'object') {
+    const record = result as Record<string, unknown>;
+    for (const key of ['image', 'data', 'base64']) {
+      const value = record[key];
+      if (typeof value === 'string' && value.length > 0) return value;
+    }
+  }
+  throw new Error('Cloudflare Workers AI returned no image');
+}
+
+/** Cloudflare Workers AI text-to-image via POST /accounts/{id}/ai/run/{model}.
+ *  The REST API answers `{ result: { image: "<base64>" }, success: true }`. */
+export async function callCloudflareImageProvider(accountId: string, apiKey: string, model: string, body: {
+  prompt: string;
+  count: number;
+  seed?: number;
+}): Promise<ProviderImage[]> {
+  if (!accountId) throw new Error('Cloudflare Workers AI is not configured. Set CLOUDFLARE_ACCOUNT_ID in .env.local.');
+  if (!apiKey) throw new Error('Cloudflare Workers AI is not configured. Set the API Token in .env.local.');
+  const root = cloudflareRunUrl(accountId);
+  return Promise.all(Array.from({ length: body.count }, async (_, index) => {
+    const payload: Record<string, unknown> = { prompt: body.prompt };
+    if (body.seed != null) payload.seed = body.seed + index;
+    const response = await fetchWithProxy(`${root}/${model}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(payload),
+    });
+    const bodyText = await response.text();
+    if (!response.ok) throw new Error(cloudflareError(response.status, bodyText));
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(bodyText) as { result?: unknown; success?: boolean };
+    } catch {
+      throw new Error('Cloudflare Workers AI returned an invalid image response');
+    }
+    const result = (parsed as { result?: unknown }).result ?? parsed;
+    return { b64_json: cloudflareImageFromResult(result) };
+  }));
+}

@@ -8,6 +8,7 @@ import { secret, text, type SettingsVendorPage } from './settingsFields';
 
 const llmPage = (preset: (typeof LLM_PROVIDER_PRESETS)[number]): SettingsVendorPage => {
   const names = llmProviderConfigNames(preset.id);
+  const isCloudflare = preset.id === 'cloudflare';
   return {
     key: `llm/${preset.id}`,
     vendor: preset.id as VendorId,
@@ -15,7 +16,10 @@ const llmPage = (preset: (typeof LLM_PROVIDER_PRESETS)[number]): SettingsVendorP
     note: preset.id === 'anthropic'
       ? '内置 Agent 可使用 Anthropic API Key，也可以在下方「Anthropic · Claude Code」页用 Claude 订阅登录（无需 API Key）。'
         + '独立运行的 Claude Code 会话也可以通过「外部 Agent 接入 (MCP)」驱动 OpenChatCut。'
-      : '每个厂商独立保存地址、密钥与模型。先测试连接，成功后可从接口返回的模型中选择。',
+      : isCloudflare
+        ? 'Cloudflare Workers AI：填写 Account ID + API Token（Workers AI 模板，在 Cloudflare 控制台 Workers AI 页创建）'
+          + '，选择聊天模型。同一组凭据也用于生图与配音页，无需重复填写。'
+        : '每个厂商独立保存地址、密钥与模型。先测试连接，成功后可从接口返回的模型中选择。',
     ...(preset.id === 'anthropic'
       ? { noteAction: { label: '外部 Agent 接入 (MCP)', action: 'open-mcp-guide' } }
       : {}),
@@ -25,8 +29,11 @@ const llmPage = (preset: (typeof LLM_PROVIDER_PRESETS)[number]): SettingsVendorP
         label: 'API URL',
         kind: 'text',
         defaultLabel: preset.baseUrl,
-        note: '填写完整 API 前缀；可使用官方地址、自建网关或兼容中转。',
+        note: isCloudflare
+          ? '保留默认即可（ACCOUNT_ID 会用下面的 Account ID 自动替换）；也可以粘贴含 Account ID 的完整地址。'
+          : '填写完整 API 前缀；可使用官方地址、自建网关或兼容中转。',
       },
+      ...(isCloudflare ? [secret('CLOUDFLARE_ACCOUNT_ID', 'Account ID')] : []),
       secret(names.apiKey, isLocalLlmProvider(preset.id) ? 'API Key（可选）' : 'API Key'),
       ...(preset.id === 'openai' ? [{
         name: 'LLM_OPENAI_API_MODE',

@@ -44,7 +44,7 @@ export type VendorId =
   | 'seedance' | 'kling' | 'mureka' | 'sonilo' | 'pexels' | 'pixabay' | 'unsplash' | 'freesound'
   | 'assemblyai' | 'deepgram' | 'groq' | 'cartesia' | 'e2b' | 'firecrawl' | 'r2' | 'localdisk' | 'localasr'
   | 'stepfun' | 'byteplus' | 'inworld' | 'fishaudio' | 'speechify' | 'wavespeed'
-  | 'vision' | 'proxy' | 'atlas' | 'xai' | 'xai-oauth' | 'copilot' | 'ofox' | 'fal' | 'uploadpost';
+  | 'vision' | 'proxy' | 'atlas' | 'xai' | 'xai-oauth' | 'copilot' | 'ofox' | 'fal' | 'uploadpost' | 'cloudflare';
 
 interface SvgIcon {
   readonly svg: string;
@@ -84,6 +84,7 @@ const SVG_ICONS: Partial<Record<VendorId, SvgIcon>> = {
   unsplash: { svg: unsplashSvg, tint: theme.text }, // simple-icons single color, ink color according to skin
   freesound: { svg: freesoundSvg, tint: '#E85D4C' }, // Site pin + brand red and orange
   r2: { svg: cloudflareSvg, tint: '#F6821F' },      // R2 = Cloudflare product, use Cloudflare official logo
+  cloudflare: { svg: cloudflareSvg, tint: '#F6821F' }, // Workers AI shares the Cloudflare mark
   openrouter: { svg: openrouterSvg, tint: '#7624F4' }, // Official OpenRouter mark + primary purple
   ollama: { svg: ollamaSvg, tint: theme.text },        // Official llama mark, adapted for skin contrast
   lmstudio: { svg: lmstudioSvg },                      // Official LM Studio color app icon

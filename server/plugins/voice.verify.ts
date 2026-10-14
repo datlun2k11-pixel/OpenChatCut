@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { minimaxVoiceBody, minimaxVoiceResult } from './voice-providers.ts';
+import { cloudflareVoice, minimaxVoiceBody, minimaxVoiceResult } from './voice-providers.ts';
 import { validateVoiceRequest } from './voice.ts';
 import { generateAiVoice } from './voice-ai-sdk.ts';
 import type { VoiceOptions } from './voice-types.ts';
@@ -132,6 +132,22 @@ assert.throws(
   /Speechify only accepts text, voiceId, and modelId/,
 );
 
+const cloudflare = validateVoiceRequest({ provider: 'cloudflare', text: 'Hello', voiceId: 'any-voice', languageCode: 'fr' });
+assert.equal(cloudflare.provider, 'cloudflare');
+assert.equal(cloudflare.languageCode, 'fr');
+assert.throws(
+  () => validateVoiceRequest({ provider: 'cloudflare', text: 'x'.repeat(5_001), voiceId: 'v' }),
+  /at most 5000 characters/,
+);
+assert.throws(
+  () => validateVoiceRequest({ provider: 'cloudflare', text: 'hi', voiceId: 'v', speed: 1.2 }),
+  /Cloudflare only accepts text, voiceId, modelId, and languageCode/,
+);
+assert.throws(
+  () => validateVoiceRequest({ provider: 'cloudflare', text: 'hi', voiceId: 'v', languageCode: '!!!' }),
+  /ISO language code/,
+);
+
 const aiOptions: VoiceOptions = {
   elevenBaseUrl: '', elevenApiKey: '', elevenModel: '',
   doubaoBaseUrl: '', doubaoAppId: '', doubaoAccessKey: '', doubaoResourceId: '',
@@ -139,6 +155,8 @@ const aiOptions: VoiceOptions = {
   inworldBaseUrl: '', inworldApiKey: '', inworldModel: '',
   fishAudioBaseUrl: '', fishAudioApiKey: '', fishAudioModel: '',
   speechifyBaseUrl: '', speechifyApiKey: '', speechifyModel: '',
+  cloudflareAccountId: 'acct-123', cloudflareApiKey: 'cf-token',
+  cloudflareModel: '@cf/myshell-ai/melotts', cloudflareLang: 'en',
   ai: {
     openaiBaseUrl: 'https://api.openai.test',
     openaiApiKey: 'openai-test-key',
@@ -184,6 +202,39 @@ try {
   assert.equal(generated.codec, 'mp3');
 } finally {
   globalThis.fetch = originalFetch;
+}
+
+{
+  const seen: Array<{ url: string; body: Record<string, unknown> }> = [];
+  const binaryFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    seen.push({ url: String(input), body: JSON.parse(String(init?.body)) as Record<string, unknown> });
+    return new Response(Buffer.from([9, 9]), { headers: { 'Content-Type': 'audio/mpeg' } });
+  }) as typeof fetch;
+  try {
+    const audio = await cloudflareVoice(aiOptions, validateVoiceRequest({ provider: 'cloudflare', text: 'Hello', voiceId: 'v' }));
+    assert.deepEqual([...audio], [9, 9]);
+    assert.equal(seen[0]?.url, 'https://api.cloudflare.com/client/v4/accounts/acct-123/ai/run/@cf/myshell-ai/melotts');
+    assert.equal(seen[0]?.body.prompt, 'Hello');
+    assert.equal(seen[0]?.body.lang, 'en');
+  } finally {
+    globalThis.fetch = binaryFetch;
+  }
+  const jsonFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response(
+    JSON.stringify({ result: { audio: Buffer.from([7, 7]).toString('base64') }, success: true }),
+    { headers: { 'Content-Type': 'application/json' } },
+  )) as typeof fetch;
+  try {
+    const fromJson = await cloudflareVoice(aiOptions, validateVoiceRequest({ provider: 'cloudflare', text: 'Hi', voiceId: 'v', languageCode: 'fr' }));
+    assert.deepEqual([...fromJson], [7, 7], 'Cloudflare JSON audio payload is decoded');
+  } finally {
+    globalThis.fetch = jsonFetch;
+  }
+  await assert.rejects(
+    cloudflareVoice({ ...aiOptions, cloudflareAccountId: '' }, validateVoiceRequest({ provider: 'cloudflare', text: 'Hi', voiceId: 'v' })),
+    /CLOUDFLARE_ACCOUNT_ID/,
+  );
 }
 
 console.log('voice.verify: ok (provider validation + OpenAI AI SDK request)');

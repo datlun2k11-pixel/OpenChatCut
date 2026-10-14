@@ -118,6 +118,8 @@ export default defineConfig(({ mode }) => {
   const minimaxKey = env.MINIMAX_API_KEY || '';
   const seedanceKey = env.SEEDANCE_API_KEY || '';
   const klingKey = env.KLING_API_KEY || '';
+  const cloudflareKey = env.LLM_CLOUDFLARE_API_KEY || '';
+  const cloudflareAccount = env.CLOUDFLARE_ACCOUNT_ID || '';
   const pexelsKey = env.PEXELS_API_KEY || '';
   const pixabayKey = env.PIXABAY_API_KEY || '';
   const unsplashKey = env.UNSPLASH_ACCESS_KEY || '';
@@ -134,8 +136,8 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(appPackage.version),
       __CONFIGURED_CAPS__: JSON.stringify({
-        image: Boolean(imageKey || geminiKey || minimaxKey || falKey),
-        voice: Boolean((doubaoAppId && doubaoAccessKey) || elevenKey || minimaxKey),
+        image: Boolean(imageKey || geminiKey || minimaxKey || falKey || (cloudflareAccount && cloudflareKey)),
+        voice: Boolean((doubaoAppId && doubaoAccessKey) || elevenKey || minimaxKey || (cloudflareAccount && cloudflareKey)),
         video: Boolean(seedanceKey || klingKey || minimaxKey || falKey),
         music: Boolean(murekaKey || minimaxKey),
         sound: Boolean(elevenKey),

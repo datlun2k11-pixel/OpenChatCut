@@ -109,6 +109,13 @@ const overrides: Record<string, string> = {
   '也可以手动填写厂商的其它模型 ID，建议列表仅为常用模型。': 'Puoi anche inserire manualmente un altro ID modello di questo provider; l’elenco suggerito copre solo i modelli più comuni.',
   '选择服务实际支持的协议；OpenAI 使用 Responses API，兼容服务使用 Chat Completions API。': 'Scegli il protocollo realmente supportato dal servizio. OpenAI usa Responses API; i servizi compatibili usano Chat Completions.',
   'MiniMax 同一个 Key，配置一次全能力（生图 / 配音 / 视频 / 音乐）通用。': 'Una sola chiave MiniMax copre immagini, voce, video e musica.',
+  'Cloudflare Workers AI：填写 Account ID + API Token（Workers AI 模板，在 Cloudflare 控制台 Workers AI 页创建），选择聊天模型。同一组凭据也用于生图与配音页，无需重复填写。': 'Cloudflare Workers AI: inserisci Account ID + API Token (template Workers AI, creato nella pagina Workers AI della dashboard Cloudflare) e scegli un modello chat. Le stesse credenziali valgono per immagini e voce.',
+  '保留默认即可（ACCOUNT_ID 会用下面的 Account ID 自动替换）；也可以粘贴含 Account ID 的完整地址。': 'Mantieni il valore predefinito (ACCOUNT_ID viene sostituito con l’Account ID qui sotto); oppure incolla un indirizzo completo contenente l’Account ID.',
+  '使用 Workers AI REST API 生成图片（与 Agent 大脑共用同一组 Account ID + API Token）。文生图，每次最多 4 张；不支持参考图与自定义尺寸。': 'Genera immagini con la REST API di Workers AI (stessa coppia Account ID + API Token del provider Agent). Solo text-to-image, fino a 4 per chiamata; niente immagini di riferimento o dimensioni personalizzate.',
+  '也可以手动填写其它 Workers AI 生图模型 ID，如 @cf/bytedance/stable-diffusion-xl-lightning。': 'Puoi inserire manualmente un altro ID modello immagini di Workers AI, ad es. @cf/bytedance/stable-diffusion-xl-lightning.',
+  '使用 Workers AI MeloTTS 配音（与 Agent 大脑共用同一组 Account ID + API Token）。voiceId 随意填写即可，语言由下面的语言字段决定。': 'Doppiaggio con MeloTTS di Workers AI (stessa coppia Account ID + API Token del provider Agent). Qualsiasi voiceId va bene; la lingua dipende dal campo lingua qui sotto.',
+  'MeloTTS 语言代码，如 en / fr / es / zh / ja / ko。也可以在调用时用 languageCode 覆盖。': 'Codice lingua MeloTTS, ad es. en / fr / es / zh / ja / ko. Sovrascrivibile per chiamata con languageCode.',
+  '配音语言': 'Lingua voce',
   'Key 同时用于音效生成（submit_sound）。': 'La chiave viene usata anche per generare effetti sonori (submit_sound).',
 
   'Codex 模型': 'Modello Codex',

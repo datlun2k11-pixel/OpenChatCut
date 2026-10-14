@@ -131,6 +131,16 @@ export const LLM_PROVIDER_PRESETS = [
     defaultModel: 'deepseek/deepseek-v3.2',
   },
   {
+    // Cloudflare Workers AI: OpenAI-compatible chat endpoint. Replace
+    // ACCOUNT_ID with your Cloudflare Account ID, or leave the placeholder
+    // and fill the Account ID field — the server substitutes it at runtime.
+    id: 'cloudflare',
+    label: 'Cloudflare · Workers AI',
+    protocol: 'openai-compatible',
+    baseUrl: 'https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/v1',
+    defaultModel: '@cf/meta/llama-3.1-8b-instruct',
+  },
+  {
     id: 'orcarouter',
     label: 'OrcaRouter',
     protocol: 'openai-compatible',

@@ -109,6 +109,7 @@ export const VOICE_SETTINGS_GROUP: SettingsGroup = {
     { value: 'gemini', label: 'Google Gemini' },
     { value: 'mistral', label: 'Mistral Voxtral' },
     { value: 'cartesia', label: 'Cartesia' },
+    { value: 'cloudflare', label: 'Cloudflare Workers AI' },
   ]),
   vendors: [
     {
@@ -187,6 +188,17 @@ export const VOICE_SETTINGS_GROUP: SettingsGroup = {
         modelText('CARTESIA_TTS_MODEL', '配音模型', 'sonic-3'),
       ],
     },
+    {
+      key: 'voice/cloudflare', vendor: 'cloudflare', title: 'Cloudflare Workers AI',
+      note: '使用 Workers AI MeloTTS 配音（与 Agent 大脑共用同一组 Account ID + API Token）。voiceId 随意填写即可，语言由下面的语言字段决定。',
+      fields: [
+        secret('CLOUDFLARE_ACCOUNT_ID', 'Account ID'),
+        secret('LLM_CLOUDFLARE_API_KEY', 'API Token'),
+        modelText('CLOUDFLARE_TTS_MODEL', '配音模型', '@cf/myshell-ai/melotts'),
+        modelText('CLOUDFLARE_TTS_LANG', '配音语言', 'en',
+          'MeloTTS 语言代码，如 en / fr / es / zh / ja / ko。也可以在调用时用 languageCode 覆盖。'),
+      ],
+    },
   ],
 };
 
@@ -252,6 +264,7 @@ export const ROUTE_NEEDS: Record<string, readonly (readonly string[])[]> = {
   gemini: [['GEMINI_API_KEY']],
   mistral: [['LLM_MISTRAL_API_KEY']],
   cartesia: [['CARTESIA_API_KEY']],
+  cloudflare: [['CLOUDFLARE_ACCOUNT_ID', 'LLM_CLOUDFLARE_API_KEY']],
   assemblyai: [['ASSEMBLYAI_API_KEY']],
   local: [[]],
   deepgram: [['DEEPGRAM_API_KEY']],

@@ -204,6 +204,29 @@ const groqProbe: ProbeDef = {
 
 /** xAI media pages: one probe for image and video; the subscription session
  * token takes priority over the configured LLM API key. */
+/** Cloudflare Workers AI: one probe for the Agent/image/TTS pages — the shared
+ *  Account ID + API Token pair. Workers AI exposes no OpenAI-style /models
+ *  listing (GET answers 405), so the probe sends a minimum-cost chat
+ *  completion (one short prompt, one token) through the same
+ *  OpenAI-compatible endpoint the Agent uses. */
+function cloudflareAccountRoot(get: Get): string {
+  return `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(get('CLOUDFLARE_ACCOUNT_ID'))}/ai/v1`;
+}
+const cloudflareProbe: ProbeDef = {
+  needs: [['CLOUDFLARE_ACCOUNT_ID', 'LLM_CLOUDFLARE_API_KEY']],
+  run: (get) => fetchWithProxy(`${cloudflareAccountRoot(get)}/chat/completions`, {
+    method: 'POST',
+    signal: t(),
+    headers: { 'Content-Type': 'application/json', ...bearer(get('LLM_CLOUDFLARE_API_KEY')) },
+    body: JSON.stringify({
+      model: get('LLM_CLOUDFLARE_MODEL') || '@cf/meta/llama-3.1-8b-instruct',
+      messages: [{ role: 'user', content: 'hi' }],
+      max_tokens: 1,
+      stream: false,
+    }),
+  }),
+};
+
 const xaiMediaProbe: ProbeDef = {
   needs: [['LLM_XAI_OAUTH_API_KEY'], ['LLM_XAI_API_KEY']],
   run: (get) => {
@@ -272,6 +295,8 @@ export const PROBES: Record<string, ProbeDef> = {
   'image/minimax': minimaxProbe,
   'image/byteplus': byteplusProbe,
   'image/xai': xaiMediaProbe,
+  'image/cloudflare': cloudflareProbe,
+  'llm/cloudflare': cloudflareProbe,
   'image/wavespeed': {
     needs: [['WAVESPEED_API_KEY']],
     run: (get) => fetch(`${base(get, 'WAVESPEED_BASE_URL', 'https://api.wavespeed.ai')}/api/v3/balance`, {
@@ -283,6 +308,7 @@ export const PROBES: Record<string, ProbeDef> = {
   'voice/gemini': geminiMediaProbe,
   'voice/mistral': mistralMediaProbe,
   'voice/cartesia': cartesiaProbe,
+  'voice/cloudflare': cloudflareProbe,
   // openpeech does not have free probing endpoints, synthesizing 1 word is the minimum real verification (the cost is negligible).
   'voice/doubao': {
     needs: [['DOUBAO_TTS_APP_ID', 'DOUBAO_TTS_ACCESS_KEY']],

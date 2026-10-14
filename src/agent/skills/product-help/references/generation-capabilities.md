@@ -21,6 +21,7 @@ Short map of cloud generation tools → providers. Use this when guiding setup o
 | `nano-banana` | Gemini; best multi-ref (≤14) |
 | `image-01` | MiniMax; one subject ref via R2; custom dimensions, count ≤9, prompt ≤1500, seed, optimizer default false |
 | `grok-imagine` | xAI Grok Imagine; text-to-image; ≤4 outputs; aspect set 1:1/16:9/9:16/4:3/3:4/3:2/2:3; 1k/2k |
+| `cloudflare` | Cloudflare Workers AI; text-to-image; ≤4 outputs; prompt ≤2048; seed; no refs/dimensions |
 
 ## Voice · `submit_voice`
 
@@ -34,6 +35,7 @@ Short map of cloud generation tools → providers. Use this when guiding setup o
 | `gemini` | AI SDK speech; configured model defaults to `gemini-2.5-flash-preview-tts`; model/output/instructions |
 | `mistral` | AI SDK speech; configured model defaults to `voxtral-mini-tts-2603`; model/output |
 | `cartesia` | AI SDK speech; configured model defaults to `sonic-3`; model/speed/language/output |
+| `cloudflare` | Workers AI MeloTTS; `CLOUDFLARE_TTS_MODEL` defaults to `@cf/myshell-ai/melotts`; voiceId (any) + model/languageCode |
 
 Every provider is opt-in and requires a concrete provider-specific `voiceId`.
 Only Doubao, ElevenLabs, and MiniMax have curated choices in the voice skill;

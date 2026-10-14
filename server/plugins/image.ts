@@ -14,6 +14,7 @@ import { uploadDir } from '../media-dir.ts';
 import { fetchGeneratedResult } from './result-download.ts';
 import {
   callByteplusImageProvider,
+  callCloudflareImageProvider,
   callGeminiProvider,
   callGrokImageProvider,
   callMinimaxProvider,
@@ -55,6 +56,9 @@ interface ImagePluginOptions {
   xaiBaseUrl: string;
   xaiApiKey: string;
   xaiImageModel: string;
+  cloudflareAccountId: string;
+  cloudflareApiKey: string;
+  cloudflareModel: string;
 }
 
 interface ImageRequest {
@@ -80,7 +84,7 @@ interface ImageRequest {
 }
 
 export interface ValidImageRequest {
-  model: 'gpt-image-2' | 'nano-banana' | 'image-01' | 'wavespeed' | 'byteplus' | 'grok-imagine' | 'fal';
+  model: 'gpt-image-2' | 'nano-banana' | 'image-01' | 'wavespeed' | 'byteplus' | 'grok-imagine' | 'cloudflare' | 'fal';
   falModel?: string;
   falInput?: FalCatalogInput;
   prompt: string;
@@ -109,6 +113,7 @@ function customDimensions(input: ImageRequest, model: ValidImageRequest['model']
   if (input.aspectRatio != null) throw new Error('custom width/height cannot be combined with aspectRatio');
   if (model === 'nano-banana') throw new Error('custom width/height are not supported by nano-banana');
   if (model === 'grok-imagine') throw new Error('custom width/height are not supported by grok-imagine');
+  if (model === 'cloudflare') throw new Error('custom width/height are not supported by Cloudflare Workers AI');
   if (!Number.isInteger(width) || !Number.isInteger(height)) throw new Error('width and height must be integers');
   const [minimum, maximum, divisor] = model === 'image-01' ? [512, 2048, 8] : [512, 3840, 16];
   if (width < minimum || width > maximum || height < minimum || height > maximum) {
@@ -143,7 +148,7 @@ function rejectForeignImageOptions(input: ImageRequest, model: ValidImageRequest
   if (model !== 'image-01' && input.promptOptimizer != null) {
     throw new Error('promptOptimizer is supported by image-01 (MiniMax) only');
   }
-  if (model !== 'image-01' && input.seed != null) throw new Error('seed is supported by image-01 (MiniMax) only');
+  if (model !== 'image-01' && model !== 'cloudflare' && input.seed != null) throw new Error('seed is supported by image-01 (MiniMax) and Cloudflare Workers AI only');
 }
 
 /** Pure request validation — exported for unit checks. */
@@ -164,7 +169,7 @@ export function validateImageRequest(input: ImageRequest): ValidImageRequest {
       referencePaths: input.referencePaths ?? [], aspectRatio: input.aspectRatio ?? '16:9',
       imageSize: input.imageSize ?? '1K', quality: 'high', outputFormat: 'png' };
   }
-  if (model !== 'gpt-image-2' && model !== 'nano-banana' && model !== 'image-01' && model !== 'wavespeed' && model !== 'byteplus' && model !== 'grok-imagine') {
+  if (model !== 'gpt-image-2' && model !== 'nano-banana' && model !== 'image-01' && model !== 'wavespeed' && model !== 'byteplus' && model !== 'grok-imagine' && model !== 'cloudflare') {
     throw new Error(`unsupported model ${model}`);
   }
   const prompt = String(input.prompt ?? '').trim();
@@ -180,7 +185,8 @@ export function validateImageRequest(input: ImageRequest): ValidImageRequest {
   if (!QUALITIES.has(quality)) throw new Error(`unsupported quality ${quality}`);
   const referencePaths = input.referencePaths ?? [];
   const referenceLimit = model === 'nano-banana' ? 14 : model === 'gpt-image-2' ? 16 : model === 'image-01' ? 1 : 0;
-  // wavespeed and byteplus (Seedream) are text-to-image only in this integration; no reference-image support yet.
+  // wavespeed, byteplus (Seedream) and cloudflare (Workers AI) are text-to-image
+  // only in this integration; no reference-image support yet.
   if (referencePaths.length > referenceLimit) {
     throw new Error(`too many reference images for ${model}`);
   }
@@ -204,6 +210,10 @@ export function validateImageRequest(input: ImageRequest): ValidImageRequest {
       throw new Error(`grok-imagine does not support aspect ratio ${aspectRatio}`);
     }
     if (prompt.length > 8000) throw new Error('grok-imagine prompt must be at most 8000 characters');
+  } else if (model === 'cloudflare') {
+    if (count > 4) throw new Error('Cloudflare Workers AI supports at most 4 images per call');
+    if (prompt.length > 2048) throw new Error('Cloudflare Workers AI prompt must be at most 2048 characters');
+    if (input.seed != null && !Number.isSafeInteger(input.seed)) throw new Error('seed must be a safe integer');
   }
   return {
     model,
@@ -425,6 +435,10 @@ export function imageGenerationPlugin(options: ImagePluginOptions): Plugin {
             images = await callGrokImageProvider(options.xaiBaseUrl, options.xaiApiKey, options.xaiImageModel, {
               prompt, count, aspectRatio, imageSize,
             });
+          } else if (model === 'cloudflare') {
+            images = await callCloudflareImageProvider(options.cloudflareAccountId, options.cloudflareApiKey, options.cloudflareModel, {
+              prompt, count, seed,
+            });
           } else {
             if (!options.apiKey) throw new Error('Image generation is not configured. Set IMAGE_API_KEY or OPENAI_API_KEY in .env.local.');
             images = await callProvider(options.baseUrl, options.apiKey, {
@@ -433,7 +447,9 @@ export function imageGenerationPlugin(options: ImagePluginOptions): Plugin {
             });
           }
           const paths = await Promise.all(images.map((image) => saveImage(image, model === 'gpt-image-2' ? outputFormat : 'png')));
-          const reportDimensions = model !== 'image-01' || input.width != null;
+          // Cloudflare returns its model-native size (aspect/size are not sent),
+          // so no dimensions are reported — same as MiniMax without custom dims.
+          const reportDimensions = (model !== 'image-01' && model !== 'cloudflare') || input.width != null;
           const imageDimensions = model === 'fal'
             ? (images[0].width && images[0].height ? { width: images[0].width, height: images[0].height } : {})
             : reportDimensions ? { width, height } : {};

@@ -93,6 +93,7 @@ function validateMinimax(input: VoiceRequest, text: string): void {
 
 /** Inworld / Fish Audio / Speechify only take text, voiceId, and an optional modelId override. */
 function validateMinimalProvider(input: VoiceRequest, label: string): void {
+
   reject([input.stability, input.speed, input.similarityBoost, input.style, input.useSpeakerBoost, input.languageCode,
     input.seed, input.outputFormat, input.optimizeStreamingLatency, input.enableLogging, input.applyTextNormalization,
     input.applyLanguageTextNormalization, input.pronunciationDictionaryLocators, input.previousText, input.nextText,
@@ -105,6 +106,25 @@ function validateMinimalProvider(input: VoiceRequest, label: string): void {
 }
 function isAiProvider(provider: string | undefined): provider is 'openai' | 'gemini' | 'mistral' | 'cartesia' {
   return provider === 'openai' || provider === 'gemini' || provider === 'mistral' || provider === 'cartesia';
+}
+
+/** Cloudflare Workers AI (MeloTTS): text + voiceId (ignored, any value is
+ *  accepted so the shared voiceId-required flow keeps working) + optional
+ *  modelId override + languageCode (MeloTTS lang, e.g. en/fr/es/zh/ja/ko). */
+function validateCloudflareProvider(input: VoiceRequest, text: string): void {
+  if (text.length > 5000) throw new Error('Cloudflare TTS text must be at most 5000 characters');
+  if (input.languageCode != null && !/^(?:[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)$/.test(input.languageCode)) {
+    throw new Error('languageCode must be an ISO language code');
+  }
+  reject([input.stability, input.speed, input.similarityBoost, input.style, input.useSpeakerBoost,
+    input.seed, input.outputFormat, input.optimizeStreamingLatency, input.enableLogging, input.applyTextNormalization,
+    input.applyLanguageTextNormalization, input.pronunciationDictionaryLocators, input.previousText, input.nextText,
+    input.previousRequestIds, input.nextRequestIds, input.speedRatio, input.emotion, input.emotionScale, input.loudnessRatio,
+    input.pitch, input.volume, input.performancePrompt, input.explicitDialect, input.sampleRate, input.bitrate, input.audioFormat,
+    input.channel, input.forceCbr, input.stream, input.excludeAggregatedAudio, input.languageBoost, input.textNormalization,
+    input.latexRead, input.pronunciations, input.timbreWeights, input.voiceModify, input.subtitleEnable, input.subtitleType,
+    input.instructions],
+  'Cloudflare only accepts text, voiceId, modelId, and languageCode');
 }
 
 function validateAiProvider(input: VoiceRequest, provider: 'openai' | 'gemini' | 'mistral' | 'cartesia'): void {
@@ -132,7 +152,7 @@ function validateAiProvider(input: VoiceRequest, provider: 'openai' | 'gemini' |
 export function validateVoiceRequest(input: VoiceRequest): ValidVoiceRequest {
   const provider = input.provider;
   if (provider !== 'elevenlabs' && provider !== 'doubao' && provider !== 'minimax'
-    && provider !== 'inworld' && provider !== 'fishaudio' && provider !== 'speechify' && !isAiProvider(provider)) {
+    && provider !== 'inworld' && provider !== 'fishaudio' && provider !== 'speechify' && provider !== 'cloudflare' && !isAiProvider(provider)) {
     throw new Error('unsupported voice provider');
   }
   const text = String(input.text ?? '').trim();
@@ -143,6 +163,7 @@ export function validateVoiceRequest(input: VoiceRequest): ValidVoiceRequest {
   if (provider === 'elevenlabs') validateEleven(input);
   else if (provider === 'doubao') validateDoubao(input, voiceId);
   else if (provider === 'minimax') validateMinimax(input, text);
+  else if (provider === 'cloudflare') validateCloudflareProvider(input, text);
   else if (isAiProvider(provider)) validateAiProvider(input, provider);
   else {
     if (provider === 'inworld' && text.length > 2_000) throw new Error('Inworld TTS text must be at most 2000 characters');

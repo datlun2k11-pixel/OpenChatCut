@@ -6,11 +6,11 @@ import { MINIMAX_LANGUAGE_BOOSTS } from '../../../shared/media-provider-params';
 export const GENERATE_TOOL_SCHEMAS: AgentToolSchema[] = [
   {
     name: 'submit_image',
-    description: 'Generate one or more AI images (Fal catalog, gpt-image-2, nano-banana, MiniMax image-01, WaveSpeed, BytePlus Seedream, or xAI Grok Imagine), save them to the project media pool, and optionally propose adding them to the active timeline. Call only when the user explicitly requested the generation.',
+    description: 'Generate one or more AI images (Fal catalog, gpt-image-2, nano-banana, MiniMax image-01, WaveSpeed, BytePlus Seedream, xAI Grok Imagine, or Cloudflare Workers AI), save them to the project media pool, and optionally propose adding them to the active timeline. Call only when the user explicitly requested the generation.',
     input_schema: {
       type: 'object',
       properties: {
-        model: { type: 'string', enum: ['gpt-image-2', 'nano-banana', 'image-01', 'wavespeed', 'byteplus', 'grok-imagine', 'fal'], description: 'gpt-image-2 is the default; nano-banana is best for reference-heavy work; image-01 is MiniMax (at most 9 outputs; one subject reference when R2 is configured); wavespeed is WaveSpeed AI (fast generic image models, no references); byteplus is BytePlus ModelArk Seedream (no references yet); grok-imagine is xAI Grok Imagine (text-to-image only, no references, at most 4 outputs, 1K/2K).' },
+        model: { type: 'string', enum: ['gpt-image-2', 'nano-banana', 'image-01', 'wavespeed', 'byteplus', 'grok-imagine', 'cloudflare', 'fal'], description: 'gpt-image-2 is the default; nano-banana is best for reference-heavy work; image-01 is MiniMax (at most 9 outputs; one subject reference when R2 is configured); wavespeed is WaveSpeed AI (fast generic image models, no references); byteplus is BytePlus ModelArk Seedream (no references yet); grok-imagine is xAI Grok Imagine (text-to-image only, no references, at most 4 outputs, 1K/2K); cloudflare is Cloudflare Workers AI (text-to-image only, no references, at most 4 outputs, seed supported).' },
         falModel: { type: 'string', enum: FAL_IMAGE_MODELS.map((model) => model.id), description: `With model=fal, select a curated Fal image model; omitted uses the saved Fal image default. ${FAL_IMAGE_MODELS.map((model) => `${model.id}: ${falModelSummary(model)}`).join('; ')}. Model-specific limits are validated before submission.` },
         prompt: { type: 'string', description: 'Detailed description of the image to generate.' },
         name: { type: 'string', description: 'Short descriptive asset name shown in the media pool.' },
@@ -28,7 +28,7 @@ export const GENERATE_TOOL_SCHEMAS: AgentToolSchema[] = [
         inputFidelity: { type: 'string', enum: ['low', 'high'], description: 'gpt-image-2 edits only. Reference-image fidelity.' },
         outputFormat: { type: 'string', enum: ['png', 'jpeg', 'webp'], description: 'gpt-image-2 only. Defaults to png.' },
         outputCompression: { type: 'integer', minimum: 0, maximum: 100, description: 'gpt-image-2 only. Send only with outputFormat=jpeg or webp; never send for PNG.' },
-        seed: { type: 'integer', description: 'MiniMax image-01 only. Reproducible random seed.' },
+        seed: { type: 'integer', description: 'MiniMax image-01 or Cloudflare Workers AI only. Reproducible random seed.' },
         promptOptimizer: { type: 'boolean', description: 'MiniMax image-01 only. prompt_optimizer; official default false.' },
       },
       required: ['prompt', 'name'],
@@ -36,20 +36,20 @@ export const GENERATE_TOOL_SCHEMAS: AgentToolSchema[] = [
   },
   {
     name: 'submit_voice',
-    description: 'Generate one TTS audio asset with ElevenLabs, Doubao, MiniMax, Inworld, Fish Audio, Speechify, OpenAI, Gemini, Mistral, or Cartesia. Creates a media-pool asset only; it does not place or replace timeline items. Confirm a configured provider and concrete provider-specific voice; MiniMax timbreWeights may mix voices with an empty voiceId.',
+    description: 'Generate one TTS audio asset with ElevenLabs, Doubao, MiniMax, Inworld, Fish Audio, Speechify, OpenAI, Gemini, Mistral, Cartesia, or Cloudflare Workers AI. Creates a media-pool asset only; it does not place or replace timeline items. Confirm a configured provider and concrete provider-specific voice; MiniMax timbreWeights may mix voices with an empty voiceId.',
     input_schema: {
       type: 'object',
       properties: {
-        provider: { type: 'string', enum: ['elevenlabs', 'doubao', 'minimax', 'inworld', 'fishaudio', 'speechify', 'openai', 'gemini', 'mistral', 'cartesia'], description: 'Required opt-in provider. Use only a provider listed as configured in capabilities. Voice IDs and catalogs are never interchangeable.' },
+        provider: { type: 'string', enum: ['elevenlabs', 'doubao', 'minimax', 'inworld', 'fishaudio', 'speechify', 'openai', 'gemini', 'mistral', 'cartesia', 'cloudflare'], description: 'Required opt-in provider. Use only a provider listed as configured in capabilities. Voice IDs and catalogs are never interchangeable.' },
         text: { type: 'string', minLength: 1, description: 'Text to synthesize.' },
         voiceId: { type: 'string', description: 'Concrete provider-specific voice ID confirmed by the user. Required except MiniMax timbreWeights mixing, where it must be empty. Do not invent a preset or reuse an ID from another provider.' },
-        modelId: { type: 'string', description: 'ElevenLabs, Inworld, Fish Audio, Speechify, OpenAI, Gemini, Mistral, or Cartesia only. Omit to use the configured model.' },
+        modelId: { type: 'string', description: 'ElevenLabs, Inworld, Fish Audio, Speechify, OpenAI, Gemini, Mistral, Cartesia, or Cloudflare only. Omit to use the configured model.' },
         stability: { type: 'number', minimum: 0, maximum: 1, description: 'ElevenLabs only. Defaults to 0.5.' },
         speed: { type: 'number', minimum: 0.5, maximum: 2, description: 'ElevenLabs (0.7–1.2), MiniMax (0.5–2), OpenAI, or Cartesia only. Defaults to 1; provider/model support is validated server-side.' },
         similarityBoost: { type: 'number', minimum: 0, maximum: 1, description: 'ElevenLabs voice_settings.similarity_boost.' },
         style: { type: 'number', minimum: 0, maximum: 1, description: 'ElevenLabs voice_settings.style.' },
         useSpeakerBoost: { type: 'boolean', description: 'ElevenLabs speaker boost.' },
-        languageCode: { type: 'string', description: 'ElevenLabs or Cartesia only. Provider/model support is validated server-side.' },
+        languageCode: { type: 'string', description: 'ElevenLabs, Cartesia, or Cloudflare only. Provider/model support is validated server-side.' },
         seed: { type: 'integer', minimum: 0, maximum: 4294967295, description: 'ElevenLabs reproducibility seed.' },
         outputFormat: { type: 'string', description: 'ElevenLabs official output enum (for example mp3_44100_128) or OpenAI/Gemini/Mistral/Cartesia provider-supported output format.' },
         instructions: { type: 'string', description: 'OpenAI or Gemini only. Optional natural-language delivery instructions; send only when requested and supported by the configured model.' },
